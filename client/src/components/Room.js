@@ -58,11 +58,10 @@ const Room = (props) => {
 
   async function videoChat() {
     socketRef.current = io.connect("/");
-console.log(`Media: ${JSON.stringify(navigator.mediaDevices)}`);
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
     userVideo.current.srcObject = stream;
-    setAudio({isMuted: false, audioTracks: stream.getAudioTracks()});
-    setVideo({isOn: true, videoTracks: stream.getVideoTracks()});
+    setAudio({ isMuted: false, audioTracks: stream.getAudioTracks() });
+    setVideo({ isOn: true, videoTracks: stream.getVideoTracks() });
     socketRef.current.emit("join-room", roomID);
 
     socketRef.current.on("room-full", () =>
@@ -82,7 +81,10 @@ console.log(`Media: ${JSON.stringify(navigator.mediaDevices)}`);
           peerID: peerUserID,
           peer,
         });
-        peers.push(peer);
+        peers.push({
+          peerID: peerUserID,
+          peer,
+        });
       });
       setPeers(peers);
     });
@@ -93,21 +95,34 @@ console.log(`Media: ${JSON.stringify(navigator.mediaDevices)}`);
         peerID: payload.callerID,
         peer,
       });
-
-      setPeers((users) => [...users, peer]);
+      const newPeer = {
+        peerID: payload.callerID,
+        peer,
+      };
+      setPeers((users) => [...users, newPeer]);
     });
 
     socketRef.current.on("receiving-answer", (payload) => {
       const item = peersRef.current.find((p) => p.peerID === payload.id);
       item.peer.signal(payload.data);
     });
+
+    socketRef.current.on("user-left", (id) => {
+      const peerLeft = peersRef.current.find((p) => p.peerID === id);
+      if (peerLeft) {
+        peerLeft.peer.destroy();
+      }
+      const newPeers = peersRef.current.filter((p) => p.peerID !== id);
+      peersRef.current = newPeers;
+      setPeers(newPeers);
+    });
   }
 
   return (
     <Container>
       <StyledVideo muted ref={userVideo} autoPlay playsInline />
-      {peers.map((peer, index) => {
-        return <Video key={index} peer={peer} />;
+      {peers.map((peer) => {
+        return <Video key={peer.peerID} peer={peer.peer} />;
       })}
       <Menubar audio={audio} video={video} />
     </Container>
