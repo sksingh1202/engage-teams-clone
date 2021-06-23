@@ -7,6 +7,7 @@ import styled from "styled-components";
 
 // internal components
 import { createPeer, addPeer } from "./Peer";
+import Menubar from "./Menubar";
 
 const Container = styled.div`
   padding: 20px;
@@ -44,6 +45,8 @@ const constraints = {
 
 const Room = (props) => {
   const [peers, setPeers] = useState([]);
+  const [audio, setAudio] = useState({});
+  const [video, setVideo] = useState({});
   const socketRef = useRef();
   const userVideo = useRef();
   const peersRef = useRef([]);
@@ -55,8 +58,11 @@ const Room = (props) => {
 
   async function videoChat() {
     socketRef.current = io.connect("/");
+console.log(`Media: ${JSON.stringify(navigator.mediaDevices)}`);
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
     userVideo.current.srcObject = stream;
+    setAudio({isMuted: false, audioTracks: stream.getAudioTracks()});
+    setVideo({isOn: true, videoTracks: stream.getVideoTracks()});
     socketRef.current.emit("join-room", roomID);
 
     socketRef.current.on("room-full", () =>
@@ -103,6 +109,7 @@ const Room = (props) => {
       {peers.map((peer, index) => {
         return <Video key={index} peer={peer} />;
       })}
+      <Menubar audio={audio} video={video} />
     </Container>
   );
 };
