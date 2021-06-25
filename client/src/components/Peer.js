@@ -5,7 +5,7 @@ export function createPeer(userToSignal, callerID, stream, socketRef) {
   const peer = new Peer({
     initiator: true,
     trickle: false,
-    stream,
+    // stream,
   });
 
   // "signal" is triggered once the peer object is created
@@ -22,7 +22,7 @@ export function addPeer(incomingSignal, callerID, stream, socketRef) {
   const peer = new Peer({
     initiator: false, // person who is already in the call is not the initiator
     trickle: false,
-    stream,
+    // stream,
   });
 
   // "signal" is triggered once the peer object is created

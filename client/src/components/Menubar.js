@@ -1,11 +1,12 @@
 import React from "react";
 
-const Menubar = ({ audio, video, leaveRoom }) => {
+const Menubar = ({ audio, video, leaveRoom, shareScreen }) => {
   return (
     <div>
       <button onClick={() => toggleAudio(audio)}>Mute</button>
       <button onClick={() => toggleVideo(video)}>Video</button>
       <button onClick={() => leaveRoom()}>Leave</button>
+      <button onClick={() => shareScreen()}>Share Screen</button>
     </div>
   );
 };

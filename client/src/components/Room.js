@@ -49,6 +49,7 @@ const Room = (props) => {
   const [video, setVideo] = useState({});
   const socketRef = useRef();
   const userVideo = useRef();
+  const userVideoTracks = useRef([]);
   const peersRef = useRef([]);
 
   useEffect(() => {
@@ -59,6 +60,7 @@ const Room = (props) => {
       userVideo.current.srcObject = stream;
       setAudio({ isMuted: false, audioTracks: stream.getAudioTracks() });
       setVideo({ isOn: true, videoTracks: stream.getVideoTracks() });
+      // setUserVideoTracks(stream);
       socketRef.current.emit("join-room", roomID);
 
       socketRef.current.on("room-full", () =>
@@ -74,6 +76,15 @@ const Room = (props) => {
             stream,
             socketRef
           );
+
+          try{
+            stream.getTracks().forEach((track) =>
+            userVideoTracks.current.push(peer.addTrack(track, stream)));
+          }
+          catch(err) {
+            console.log(`Error in createPeer: ${err}`);
+          }
+
           peersRef.current.push({
             peerID: peerUserID,
             peer,
@@ -83,11 +94,20 @@ const Room = (props) => {
             peer,
           });
         });
-        setPeers(peers);
+        setPeers([...peersRef.current]);
       });
 
       socketRef.current.on("user-joined", (payload) => {
         const peer = addPeer(payload.data, payload.callerID, stream, socketRef);
+
+        try {
+          stream.getTracks().forEach((track) =>
+          userVideoTracks.current.push(peer.addTrack(track, stream)));
+          console.log(`userVideoTracks: ${userVideoTracks}`);
+        } catch (error) {
+          console.log(`Error in addPeer: ${error}`);
+        }
+
         peersRef.current.push({
           peerID: payload.callerID,
           peer,
@@ -121,13 +141,42 @@ const Room = (props) => {
     props.history.push(`/`);
   };
 
+  const setUserVideoTracks = (stream) => {
+    const sentinelPeer = new RTCPeerConnection();
+    stream
+      .getTracks()
+      .forEach((track) =>
+        userVideoTracks.current.push(sentinelPeer.addTrack(track))
+      );
+  };
+
+  const shareScreen = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        cursor: true,
+      });
+      const screenTrack = stream.getTracks()[0];
+      console.log(userVideoTracks);
+      userVideoTracks.current
+        .find((sender) => sender.track.kind === "video")
+        .replaceTrack(screenTrack);
+      screenTrack.onended = () =>
+        userVideoTracks.current
+          .find((sender) => sender.track.kind === "video")
+          .replaceTrack(userVideo.current.srcObject.getTracks()[1]);
+    }
+    catch(e){
+      console.log(e);
+    }
+  };
+
   return (
     <Container>
       <StyledVideo muted ref={userVideo} autoPlay playsInline />
       {peers.map((peer) => {
         return <Video key={peer.peerID} peer={peer.peer} />;
       })}
-      <Menubar audio={audio} video={video} leaveRoom={leaveRoom} />
+      <Menubar audio={audio} video={video} leaveRoom={leaveRoom} shareScreen={shareScreen} />
     </Container>
   );
 };
