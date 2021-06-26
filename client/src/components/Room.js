@@ -49,18 +49,18 @@ const Room = (props) => {
   const [video, setVideo] = useState({});
   const socketRef = useRef();
   const userVideo = useRef();
-  const userVideoTracks = useRef([]);
   const peersRef = useRef([]);
+  const userStream = useRef();
 
   useEffect(() => {
     const roomID = props.match.params.roomID;
     const videoChat = async () => {
       socketRef.current = io.connect("/");
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      userStream.current = stream;
       userVideo.current.srcObject = stream;
       setAudio({ isMuted: false, audioTracks: stream.getAudioTracks() });
       setVideo({ isOn: true, videoTracks: stream.getVideoTracks() });
-      // setUserVideoTracks(stream);
       socketRef.current.emit("join-room", roomID);
 
       socketRef.current.on("room-full", () =>
@@ -77,14 +77,6 @@ const Room = (props) => {
             socketRef
           );
 
-          try{
-            stream.getTracks().forEach((track) =>
-            userVideoTracks.current.push(peer.addTrack(track, stream)));
-          }
-          catch(err) {
-            console.log(`Error in createPeer: ${err}`);
-          }
-
           peersRef.current.push({
             peerID: peerUserID,
             peer,
@@ -99,14 +91,6 @@ const Room = (props) => {
 
       socketRef.current.on("user-joined", (payload) => {
         const peer = addPeer(payload.data, payload.callerID, stream, socketRef);
-
-        try {
-          stream.getTracks().forEach((track) =>
-          userVideoTracks.current.push(peer.addTrack(track, stream)));
-          console.log(`userVideoTracks: ${userVideoTracks}`);
-        } catch (error) {
-          console.log(`Error in addPeer: ${error}`);
-        }
 
         peersRef.current.push({
           peerID: payload.callerID,
@@ -141,31 +125,28 @@ const Room = (props) => {
     props.history.push(`/`);
   };
 
-  const setUserVideoTracks = (stream) => {
-    const sentinelPeer = new RTCPeerConnection();
-    stream
-      .getTracks()
-      .forEach((track) =>
-        userVideoTracks.current.push(sentinelPeer.addTrack(track))
-      );
-  };
-
   const shareScreen = async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         cursor: true,
       });
       const screenTrack = stream.getTracks()[0];
-      console.log(userVideoTracks);
-      userVideoTracks.current
-        .find((sender) => sender.track.kind === "video")
-        .replaceTrack(screenTrack);
+      peersRef.current.forEach((p) => {
+        p.peer.replaceTrack(
+          video.videoTracks[0],
+          screenTrack,
+          userStream.current
+        );
+      });
       screenTrack.onended = () =>
-        userVideoTracks.current
-          .find((sender) => sender.track.kind === "video")
-          .replaceTrack(userVideo.current.srcObject.getTracks()[1]);
-    }
-    catch(e){
+        peersRef.current.forEach((p) => {
+          p.peer.replaceTrack(
+            screenTrack,
+            video.videoTracks[0],
+            userStream.current
+          );
+        });
+    } catch (e) {
       console.log(e);
     }
   };
@@ -176,7 +157,12 @@ const Room = (props) => {
       {peers.map((peer) => {
         return <Video key={peer.peerID} peer={peer.peer} />;
       })}
-      <Menubar audio={audio} video={video} leaveRoom={leaveRoom} shareScreen={shareScreen} />
+      <Menubar
+        audio={audio}
+        video={video}
+        leaveRoom={leaveRoom}
+        shareScreen={shareScreen}
+      />
     </Container>
   );
 };

@@ -8,6 +8,12 @@ export function createPeer(userToSignal, callerID, stream, socketRef) {
     // stream,
   });
 
+  try {
+    stream.getTracks().forEach((track) => peer.addTrack(track, stream));
+  } catch (err) {
+    console.log(`Error in createPeer: ${err}`);
+  }
+
   // "signal" is triggered once the peer object is created
   peer.on("signal", (data) => {
     // create an offer to the peer via the backend
@@ -24,6 +30,12 @@ export function addPeer(incomingSignal, callerID, stream, socketRef) {
     trickle: false,
     // stream,
   });
+
+  try {
+    stream.getTracks().forEach((track) => peer.addTrack(track, stream));
+  } catch (error) {
+    console.log(`Error in addPeer: ${error}`);
+  }
 
   // "signal" is triggered once the peer object is created
   peer.on("signal", (data) => {
