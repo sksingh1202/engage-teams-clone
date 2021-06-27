@@ -50,12 +50,14 @@ const Room = (props) => {
   const socketRef = useRef();
   const userVideo = useRef();
   const peersRef = useRef([]);
+  const userStream = useRef();
 
   useEffect(() => {
     const roomID = props.match.params.roomID;
     const videoChat = async () => {
       socketRef.current = io.connect("/");
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      userStream.current = stream;
       userVideo.current.srcObject = stream;
       setAudio({ isMuted: false, audioTracks: stream.getAudioTracks() });
       setVideo({ isOn: true, videoTracks: stream.getVideoTracks() });
@@ -74,6 +76,7 @@ const Room = (props) => {
             stream,
             socketRef
           );
+
           peersRef.current.push({
             peerID: peerUserID,
             peer,
@@ -83,11 +86,12 @@ const Room = (props) => {
             peer,
           });
         });
-        setPeers(peers);
+        setPeers([...peersRef.current]);
       });
 
       socketRef.current.on("user-joined", (payload) => {
         const peer = addPeer(payload.data, payload.callerID, stream, socketRef);
+
         peersRef.current.push({
           peerID: payload.callerID,
           peer,
@@ -121,13 +125,44 @@ const Room = (props) => {
     props.history.push(`/`);
   };
 
+  const shareScreen = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        cursor: true,
+      });
+      const screenTrack = stream.getTracks()[0];
+      peersRef.current.forEach((p) => {
+        p.peer.replaceTrack(
+          video.videoTracks[0],
+          screenTrack,
+          userStream.current
+        );
+      });
+      screenTrack.onended = () =>
+        peersRef.current.forEach((p) => {
+          p.peer.replaceTrack(
+            screenTrack,
+            video.videoTracks[0],
+            userStream.current
+          );
+        });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   return (
     <Container>
       <StyledVideo muted ref={userVideo} autoPlay playsInline />
       {peers.map((peer) => {
         return <Video key={peer.peerID} peer={peer.peer} />;
       })}
-      <Menubar audio={audio} video={video} leaveRoom={leaveRoom} />
+      <Menubar
+        audio={audio}
+        video={video}
+        leaveRoom={leaveRoom}
+        shareScreen={shareScreen}
+      />
     </Container>
   );
 };
