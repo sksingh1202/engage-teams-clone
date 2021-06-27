@@ -5,8 +5,14 @@ export function createPeer(userToSignal, callerID, stream, socketRef) {
   const peer = new Peer({
     initiator: true,
     trickle: false,
-    stream,
+    // stream,
   });
+
+  try {
+    stream.getTracks().forEach((track) => peer.addTrack(track, stream));
+  } catch (err) {
+    console.log(`Error in createPeer: ${err}`);
+  }
 
   // "signal" is triggered once the peer object is created
   peer.on("signal", (data) => {
@@ -22,8 +28,14 @@ export function addPeer(incomingSignal, callerID, stream, socketRef) {
   const peer = new Peer({
     initiator: false, // person who is already in the call is not the initiator
     trickle: false,
-    stream,
+    // stream,
   });
+
+  try {
+    stream.getTracks().forEach((track) => peer.addTrack(track, stream));
+  } catch (error) {
+    console.log(`Error in addPeer: ${error}`);
+  }
 
   // "signal" is triggered once the peer object is created
   peer.on("signal", (data) => {
