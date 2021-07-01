@@ -26,7 +26,7 @@ io.on("connection", (socket) => {
     // add user (socket.id) to room (roomId)
     if (users[roomID]) {
       const length = users[roomID].length;
-      if (length === 4) {
+      if (length === 7) {
         socket.emit("room-full");
         return;
       }
