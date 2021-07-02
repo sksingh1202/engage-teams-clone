@@ -14,7 +14,7 @@ import StopScreenShareIcon from "@material-ui/icons/StopScreenShare";
 const useStyles = makeStyles({
   root: {
     position: "absolute",
-    bottom: "3%",
+    bottom: "2%",
     width: "100%",
     backgroundColor: "#202124",
   },

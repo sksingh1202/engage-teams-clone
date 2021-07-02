@@ -74,7 +74,19 @@ const Video = (props) => {
       autoPlay
       controls
       ref={ref}
-      style={{ padding: 0, objectFit: "cover" }}
+      style={{ 
+        padding: 0,
+        objectFit: "cover",
+        position: "absolute",
+        right: 0,
+        bottom: 0,
+        minWidth: "100%",
+        minHeight: "100%",
+        width: "auto",
+        height: "auto",
+        backgroundSize: "cover",
+        overflow: "hidden",
+        }}
     />
   );
 };
@@ -172,6 +184,7 @@ const Room = (props) => {
   };
 
   const calcRows = (count) => {
+    console.log("Rows: " + count);
     if (count <= 2) return 30;
     if (count <= 6) return 15;
     if (count <= 9) return 10;
@@ -179,6 +192,7 @@ const Room = (props) => {
   };
 
   const calcCols = (count) => {
+    console.log("Cols: " + count);
     if (count === 1) return 60;
     if (count <= 4) return 30;
     if (count <= 9) return 20;
