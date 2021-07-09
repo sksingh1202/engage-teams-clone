@@ -5,7 +5,6 @@ import { ChatEngine } from "react-chat-engine";
 
 import Backdrop from "@material-ui/core/Backdrop";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import Button from "@material-ui/core/Button";
 import { makeStyles } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme) => ({
@@ -20,33 +19,33 @@ const Chat = (props) => {
   const chatEngRef = useRef();
   const classes = useStyles();
 
-  const setKeys = async () => {
-    try {
-      const config = {
-        method: "post",
-        url: "/fetch_keys",
-      };
-      const response = await axios(config);
-      chatEngRef.current = {};
-      chatEngRef.current["projectID"] = response.data.projectID;
-      chatEngRef.current["userName"] = props.location.state.username;
-      chatEngRef.current["userSecret"] = response.data.userSecret;
-      if (
-        chatEngRef.current["projectID"] &&
-        chatEngRef.current["userName"] &&
-        chatEngRef.current["userSecret"]
-      )
-        setAllSet(true);
-      console.log(allSet);
-    } catch (error) {
-      console.log(error);
-      props.history.push(`/`);
-    }
-  };
-
+  
   useEffect(() => {
+    const setKeys = async () => {
+      try {
+        const config = {
+          method: "post",
+          url: "/fetch_keys",
+        };
+        const response = await axios(config);
+        chatEngRef.current = {};
+        chatEngRef.current["projectID"] = response.data.projectID;
+        chatEngRef.current["userName"] = props.location.state.username;
+        chatEngRef.current["userSecret"] = response.data.userSecret;
+        if (
+          chatEngRef.current["projectID"] &&
+          chatEngRef.current["userName"] &&
+          chatEngRef.current["userSecret"]
+        )
+          setAllSet(true);
+        console.log(allSet);
+      } catch (error) {
+        console.log(error);
+        props.history.push(`/`);
+      }
+    };
     setKeys();
-  }, []);
+  }, [allSet, props.history, props.location.state.username]);
 
   return (
     <>

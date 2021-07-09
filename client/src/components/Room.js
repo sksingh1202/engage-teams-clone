@@ -6,9 +6,18 @@ import io from "socket.io-client";
 import styled from "styled-components";
 import GridList from "@material-ui/core/GridList";
 import GridListTile from "@material-ui/core/GridListTile";
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
+import Button from "@material-ui/core/Button";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { makeStyles } from "@material-ui/core/styles";
 import { useAuth0 } from "@auth0/auth0-react";
-import SendIcon from "@material-ui/icons/Send";
+import { useTheme } from "@material-ui/core/styles";
 
 // internal components
 import { createPeer, addPeer } from "./Peer";
@@ -37,7 +46,17 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     justifyContent: "center",
   },
+  snackRoot: {
+    width: '100%',
+    '& > * + *': {
+      marginTop: theme.spacing(2),
+    },
+  },
 }));
+
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
 
 const Container = styled.div`
   position: absolute;
@@ -72,7 +91,7 @@ const Video = (props) => {
     props.peer.on("stream", (stream) => {
       ref.current.srcObject = stream;
     });
-  }, []);
+  }, [props.peer]);
   return (
     <video
       height="100%"
@@ -107,13 +126,18 @@ const Room = (props) => {
   const [msg, setMsg] = useState("");
   const [showChat, setShowChat] = useState(false);
   const [screenShare, setScreenShare] = useState(false);
+  const [openSnack, setOpenSnack] = useState(false);
+  const [dialog, setDialog] = useState("");
   const socketRef = useRef();
   const userVideo = useRef();
   const peersRef = useRef([]);
   const userStream = useRef();
   const msgRef = useRef();
-  const { logout, user, isAuthenticated, loginWithRedirect } = useAuth0();
+  const joiningSocket = useRef();
+  const { user, isAuthenticated, loginWithRedirect } = useAuth0();
+  const theme = useTheme();
 
+  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const roomID = props.match.params.roomID;
 
   useEffect(() => {
@@ -123,15 +147,20 @@ const Room = (props) => {
       let new_h = window.screen.height;
       setHeight(new_h);
     });
+    socketRef.current = io.connect("/");
 
     const videoChat = async () => {
-      socketRef.current = io.connect("/");
+      /*****  add a try-catch here to check whether user has given the permission. ****/
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       userStream.current = stream;
       userVideo.current.srcObject = stream;
       setAudio({ isMuted: false, audioTracks: stream.getAudioTracks() });
       setVideo({ isOn: true, videoTracks: stream.getVideoTracks() });
-      socketRef.current.emit("join-room", roomID);
+
+      socketRef.current.emit("join-room", {
+        roomID: roomID,
+        email: user.email,
+      });
 
       socketRef.current.on("all-users", (users) => {
         const peers = [];
@@ -185,12 +214,53 @@ const Room = (props) => {
         fetchChatMsgs();
       });
     };
+
+    const admitDeny = async () => {
+      socketRef.current.emit("permission", {
+        userName: user.name || user.email,
+        roomID: roomID,
+        email: user.email,
+      });
+
+      socketRef.current.on("no permit required", async () => {
+        try {
+          await videoChat();
+          await fetchChatMsgs();
+        } catch (error) {
+          // "check your connection and try again";
+        }
+      });
+
+      socketRef.current.on("permit?", (payload) => {
+        // console.log("payload: ", payload);
+        const userAlias = payload.userAlias;
+        const socketid = payload.id;
+        joiningSocket.current = socketid; // this is a ref
+        setDialog(`1 ${userAlias}`);
+        // identify popup using popup[0] = 1
+      });
+
+      socketRef.current.on("denied", () => {
+        setDialog("denied to join");
+        // redirect to home page
+      });
+
+      socketRef.current.on("allowed", async (chatId) => {
+        // allowed in the call
+        try {
+          await videoChat();
+          await fetchChatMsgs();
+        } catch (error) {
+          // "check your connection and try again";
+        }
+      });
+    };
+
     if (isAuthenticated) {
-      videoChat();
-      fetchChatMsgs();
+      admitDeny();
     } else loginWithRedirect();
     // console.log(msgs);
-  }, []);
+  }, [isAuthenticated, loginWithRedirect, roomID, user]);
 
   const leaveRoom = () => {
     userVideo.current.srcObject.getTracks().forEach((track) => track.stop());
@@ -237,9 +307,10 @@ const Room = (props) => {
   };
 
   const sendMsg = async () => {
-    if (msg.length === 0) console.log("Kuch toh likho");
+    if (msg.length === 0) setOpenSnack(true);
     else {
-      const response = await sendChatMsg(user, msg, roomID);
+      await sendChatMsg(user, msg, roomID);
+      // const response = await sendChatMsg(user, msg, roomID);
       socketRef.current.emit("reload");
       setMsg("");
       // console.log(response);
@@ -387,6 +458,104 @@ const Room = (props) => {
         peersRef={peersRef}
         userStream={userStream}
       />
+
+      {dialog[0] === '1' && (
+        <div>
+          <Dialog
+            fullScreen={fullScreen}
+            open={true}
+            onClose={() => {
+              socketRef.current.emit("permit status", {
+                allowed: false,
+                id: joiningSocket.current,
+              });
+              setDialog("");
+            }}
+            aria-labelledby="responsive-dialog-title"
+          >
+            <DialogTitle id="responsive-dialog-title">
+              {"Someone wants to join this meeting"}
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                {`Hey, ${dialog.substr(2)} wants to join the call.`}
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                autoFocus
+                onClick={() => {
+                  socketRef.current.emit("permit status", {
+                    allowed: false,
+                    id: joiningSocket.current,
+                  });
+                  setDialog("");
+                }}
+                color="primary"
+              >
+                Deny Entry
+              </Button>
+              <Button
+                onClick={() => {
+                  socketRef.current.emit("permit status", {
+                    allowed: true,
+                    id: joiningSocket.current,
+                  });
+                  setDialog("");
+                }}
+                color="primary"
+                autoFocus
+              >
+                Admit
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </div>
+      )}
+
+      {dialog === "denied to join" && (
+        <div>
+          <Dialog
+            fullScreen={fullScreen}
+            open={true}
+            onClose={() => {
+              setDialog("");
+              // redirection to home page on Close
+              window.location.href = window.location.origin;
+            }}
+            aria-labelledby="responsive-dialog-title"
+          >
+            <DialogTitle id="responsive-dialog-title">
+              {"Permission Denied"}
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                {"You are not allowed to join this call. Kindly contact the organizer for the permission."}
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                autoFocus
+                onClick={() => {
+                  setDialog("");
+                  // redirection to home page on Close
+                  window.location.href = window.location.origin;
+                }}
+                color="primary"
+              >
+                Ok
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </div>
+      )}
+      <div className={classes.snackRoot}>
+      <Snackbar anchorOrigin={{ vertical: "top", horizontal: "center" }} open={openSnack} autoHideDuration={6000} onClose={() => setOpenSnack(false)}>
+        <Alert onClose={() => setOpenSnack(false)} severity="error">
+          The message cannot be empty!
+        </Alert>
+      </Snackbar>
+    </div>
     </Container>
   );
 };
