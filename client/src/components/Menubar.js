@@ -10,11 +10,13 @@ import VideocamOffIcon from "@material-ui/icons/VideocamOff";
 import CallEndIcon from "@material-ui/icons/CallEnd";
 import ScreenShareIcon from "@material-ui/icons/ScreenShare";
 import StopScreenShareIcon from "@material-ui/icons/StopScreenShare";
+import SpeakerNotesIcon from "@material-ui/icons/SpeakerNotes";
+import SpeakerNotesOffIcon from '@material-ui/icons/SpeakerNotesOff';
 
 const useStyles = makeStyles({
   root: {
     position: "absolute",
-    bottom: "2%",
+    bottom: 0,
     width: "100%",
     backgroundColor: "#202124",
   },
@@ -24,9 +26,11 @@ const Menubar = ({
   audio,
   video,
   screenShare,
+  showChat,
   setAudio,
   setVideo,
   setScreenShare,
+  setShowChat,
   leaveRoom,
   peersRef,
   userStream,
@@ -93,6 +97,23 @@ const Menubar = ({
             <StopScreenShareIcon color="secondary" />
           ) : (
             <ScreenShareIcon style={{ color: "white" }} />
+          )
+        }
+      />
+      <BottomNavigationAction
+        onClick={() => (showChat ? setShowChat(false) : setShowChat(true))}
+        label={
+          showChat ? (
+            <span style={{ color: "white" }}>Hide Chat</span>
+          ) : (
+            <span style={{ color: "white" }}>Show Chat</span>
+          )
+        }
+        icon={
+          showChat ? (
+            <SpeakerNotesIcon style={{ color: "yellow" }} />
+          ) : (
+            <SpeakerNotesOffIcon style={{ color: "white" }} />
           )
         }
       />
