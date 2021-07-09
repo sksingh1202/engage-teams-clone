@@ -6,9 +6,8 @@ import io from "socket.io-client";
 import styled from "styled-components";
 import GridList from "@material-ui/core/GridList";
 import GridListTile from "@material-ui/core/GridListTile";
-import { makeStyles } from "@material-ui/core/styles";
-import { useAuth0 } from "@auth0/auth0-react";
-
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
@@ -16,6 +15,8 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
+import { makeStyles } from "@material-ui/core/styles";
+import { useAuth0 } from "@auth0/auth0-react";
 import { useTheme } from "@material-ui/core/styles";
 
 // internal components
@@ -45,7 +46,17 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     justifyContent: "center",
   },
+  snackRoot: {
+    width: '100%',
+    '& > * + *': {
+      marginTop: theme.spacing(2),
+    },
+  },
 }));
+
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
 
 const Container = styled.div`
   position: absolute;
@@ -80,7 +91,7 @@ const Video = (props) => {
     props.peer.on("stream", (stream) => {
       ref.current.srcObject = stream;
     });
-  }, []);
+  }, [props.peer]);
   return (
     <video
       height="100%"
@@ -115,6 +126,7 @@ const Room = (props) => {
   const [msg, setMsg] = useState("");
   const [showChat, setShowChat] = useState(false);
   const [screenShare, setScreenShare] = useState(false);
+  const [openSnack, setOpenSnack] = useState(false);
   const [dialog, setDialog] = useState("");
   const socketRef = useRef();
   const userVideo = useRef();
@@ -122,7 +134,7 @@ const Room = (props) => {
   const userStream = useRef();
   const msgRef = useRef();
   const joiningSocket = useRef();
-  const { logout, user, isAuthenticated, loginWithRedirect } = useAuth0();
+  const { user, isAuthenticated, loginWithRedirect } = useAuth0();
   const theme = useTheme();
 
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -220,7 +232,7 @@ const Room = (props) => {
       });
 
       socketRef.current.on("permit?", (payload) => {
-        console.log("payload: ", payload);
+        // console.log("payload: ", payload);
         const userAlias = payload.userAlias;
         const socketid = payload.id;
         joiningSocket.current = socketid; // this is a ref
@@ -246,11 +258,9 @@ const Room = (props) => {
 
     if (isAuthenticated) {
       admitDeny();
-      // videoChat();
-      // fetchChatMsgs();
     } else loginWithRedirect();
     // console.log(msgs);
-  }, []);
+  }, [isAuthenticated, loginWithRedirect, roomID, user]);
 
   const leaveRoom = () => {
     userVideo.current.srcObject.getTracks().forEach((track) => track.stop());
@@ -297,9 +307,10 @@ const Room = (props) => {
   };
 
   const sendMsg = async () => {
-    if (msg.length === 0) console.log("Kuch toh likho");
+    if (msg.length === 0) setOpenSnack(true);
     else {
-      const response = await sendChatMsg(user, msg, roomID);
+      await sendChatMsg(user, msg, roomID);
+      // const response = await sendChatMsg(user, msg, roomID);
       socketRef.current.emit("reload");
       setMsg("");
       // console.log(response);
@@ -538,6 +549,13 @@ const Room = (props) => {
           </Dialog>
         </div>
       )}
+      <div className={classes.snackRoot}>
+      <Snackbar anchorOrigin={{ vertical: "top", horizontal: "center" }} open={openSnack} autoHideDuration={6000} onClose={() => setOpenSnack(false)}>
+        <Alert onClose={() => setOpenSnack(false)} severity="error">
+          The message cannot be empty!
+        </Alert>
+      </Snackbar>
+    </div>
     </Container>
   );
 };

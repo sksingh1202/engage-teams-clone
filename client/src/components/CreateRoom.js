@@ -10,28 +10,23 @@ import KeyboardIcon from "@material-ui/icons/Keyboard";
 import VideocamIcon from "@material-ui/icons/Videocam";
 import CommentIcon from "@material-ui/icons/Comment";
 import AddIcCallIcon from "@material-ui/icons/AddIcCall";
-import Slide from "@material-ui/core/Slide";
 
-import { createUser, addUser } from "./CreateUser";
-import { createChat, sendChatMsg, getChatMsgs } from "./CreateChat";
+import { createUser } from "./CreateUser";
+import { createChat } from "./CreateChat";
 import meeting_img from "./meeting.jpg";
 import logo_img from "./logo.jpg";
 
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
-import { useTheme } from '@material-ui/core/styles';
+import Button from "@material-ui/core/Button";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
+import { useTheme } from "@material-ui/core/styles";
 
 const Alert = (props) => {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
-};
-
-const TransitionRight = (props) => {
-  return <Slide {...props} direction="right" />;
 };
 
 const isValidHttpUrl = (string) => {
@@ -60,7 +55,7 @@ const CreateRoom = (props) => {
   const [meetLink, setMeetLink] = useState("");
   const { isAuthenticated, loginWithRedirect, logout, user } = useAuth0();
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
   const create = async () => {
     if (!isAuthenticated) loginWithRedirect();
@@ -78,12 +73,13 @@ const CreateRoom = (props) => {
 
   const redirectToChat = () => {
     if (!isAuthenticated) loginWithRedirect();
-    if(isAuthenticated) {
-      props.history.push({ // redirect to the chat corresponding to the username
+    if (isAuthenticated) {
+      props.history.push({
+        // redirect to the chat corresponding to the username
         pathname: "/chat",
         state: {
-          username: user.email
-        }
+          username: user.email,
+        },
       });
     }
   };
@@ -115,23 +111,22 @@ const CreateRoom = (props) => {
     }
   };
 
-  const makeUser = async () => {
-    const id = await createUser(user);
-    if(!id) {
-      setOpenDialog(true);
-      setTimeout(logout, 2500);
-    }
-  }
-
   useEffect(() => {
+    const makeUser = async () => {
+      const id = await createUser(user);
+      if (!id) {
+        setOpenDialog(true);
+        setTimeout(logout, 2500);
+      }
+    };
     if (isAuthenticated) makeUser();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, logout, user]);
 
   return (
     <div>
       <header className="text-gray-700 body-font border-b border-gray-200">
         <div className="container mx-auto flex flex-wrap p-5 flex-col md:flex-row items-center">
-          <img src={logo_img} className="h-16 w-20" />
+          <img src={logo_img} className="h-16 w-20" alt="" />
           <span className="ml-3 text-xl">TEEMS</span>
           <nav className="md:ml-auto flex flex-wrap items-center text-base justify-center">
             {isAuthenticated ? (
@@ -139,14 +134,14 @@ const CreateRoom = (props) => {
                 className="mt-5 md:mt-0 md:mr-5 inline-flex text-white bg-indigo-500 border-0 py-3 px-10 focus:outline-none hover:bg-indigo-600 rounded text-lg"
                 onClick={() => logout({ returnTo: window.location.origin })}
               >
-                <a className="cursor-pointer">Logout</a>
+                <span className="cursor-pointer">Logout</span>
               </button>
             ) : (
               <button
                 className="mt-5 md:mt-0 md:mr-5 inline-flex text-white bg-indigo-500 border-0 py-3 px-10 focus:outline-none hover:bg-indigo-600 rounded text-lg"
                 onClick={() => loginWithRedirect()}
               >
-                <a className="cursor-pointer">Login</a>
+                <span className="cursor-pointer">Login</span>
               </button>
             )}
           </nav>
@@ -236,21 +231,26 @@ const CreateRoom = (props) => {
           onClose={() => setOpenDialog(false)}
           aria-labelledby="responsive-dialog-title"
         >
-          <DialogTitle id="responsive-dialog-title">{"Problem connecting"}</DialogTitle>
+          <DialogTitle id="responsive-dialog-title">
+            {"Problem connecting"}
+          </DialogTitle>
           <DialogContent>
             <DialogContentText>
-              It seems that something is temporarily wrong with your
-              network connection. Please check your internet connection
-              and try again.
+              It seems that something is temporarily wrong with your network
+              connection. Please check your internet connection and try again.
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button autoFocus onClick={() => setOpenDialog(false)} color="primary">
+            <Button
+              autoFocus
+              onClick={() => setOpenDialog(false)}
+              color="primary"
+            >
               OK
             </Button>
           </DialogActions>
         </Dialog>
-    </div>
+      </div>
     </div>
   );
 };
