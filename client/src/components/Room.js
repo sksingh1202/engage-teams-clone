@@ -4,36 +4,59 @@ import { useEffect, useRef, useState } from "react";
 // external packages
 import io from "socket.io-client";
 import styled from "styled-components";
+import GridList from "@material-ui/core/GridList";
+import GridListTile from "@material-ui/core/GridListTile";
+import { makeStyles } from "@material-ui/core/styles";
+import { useAuth0 } from "@auth0/auth0-react";
+import SendIcon from "@material-ui/icons/Send";
 
 // internal components
 import { createPeer, addPeer } from "./Peer";
+import { addUser } from "./CreateUser";
+import { sendChatMsg, getChatMsgs } from "./CreateChat";
 import Menubar from "./Menubar";
+import "./Room.css";
+
+const DOMPurify = require("dompurify")(window);
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "space-around",
+    overflow: "hidden",
+    backgroundColor: "#202124",
+  },
+  gridList: {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    padding: 0,
+    flexWrap: "wrap",
+    listStyle: "none",
+    overflow: "auto",
+    justifyContent: "center",
+  },
+}));
 
 const Container = styled.div`
-  padding: 20px;
-  display: flex;
-  height: 100vh;
-  width: 90%;
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  height: 100%;
+  width: 100%;
   margin: auto;
-  flex-wrap: wrap;
+  background-color: #202124;
 `;
 
 const StyledVideo = styled.video`
-  height: 40%;
-  width: 50%;
+  position: absolute;
+  right: 1%;
+  bottom: 5%;
+  height: 16%;
+  width: 20%;
+  z-index: 1;
 `;
-
-const Video = (props) => {
-  const ref = useRef();
-
-  useEffect(() => {
-    props.peer.on("stream", (stream) => {
-      ref.current.srcObject = stream;
-    });
-  }, []);
-
-  return <StyledVideo playsInline autoPlay ref={ref} />;
-};
 
 const constraints = {
   audio: { echoCancellation: true },
@@ -43,17 +66,64 @@ const constraints = {
   },
 };
 
+const Video = (props) => {
+  const ref = useRef();
+  useEffect(() => {
+    props.peer.on("stream", (stream) => {
+      ref.current.srcObject = stream;
+    });
+  }, []);
+  return (
+    <video
+      height="100%"
+      width="100%"
+      playsInline
+      autoPlay
+      controls
+      ref={ref}
+      style={{
+        padding: 0,
+        objectFit: "cover",
+        position: "absolute",
+        right: 0,
+        bottom: 0,
+        minWidth: "100%",
+        minHeight: "100%",
+        width: "auto",
+        height: "auto",
+        backgroundSize: "cover",
+        overflow: "hidden",
+      }}
+    />
+  );
+};
+
 const Room = (props) => {
   const [peers, setPeers] = useState([]);
   const [audio, setAudio] = useState({});
   const [video, setVideo] = useState({});
+  const [height, setHeight] = useState();
+  const [msgs, setMsgs] = useState([]);
+  const [msg, setMsg] = useState("");
+  const [showChat, setShowChat] = useState(false);
+  const [screenShare, setScreenShare] = useState(false);
   const socketRef = useRef();
   const userVideo = useRef();
   const peersRef = useRef([]);
   const userStream = useRef();
+  const msgRef = useRef();
+  const { logout, user, isAuthenticated, loginWithRedirect } = useAuth0();
+
+  const roomID = props.match.params.roomID;
 
   useEffect(() => {
-    const roomID = props.match.params.roomID;
+    let h = window.screen.height;
+    setHeight(h);
+    window.addEventListener("resize", () => {
+      let new_h = window.screen.height;
+      setHeight(new_h);
+    });
+
     const videoChat = async () => {
       socketRef.current = io.connect("/");
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -62,10 +132,6 @@ const Room = (props) => {
       setAudio({ isMuted: false, audioTracks: stream.getAudioTracks() });
       setVideo({ isOn: true, videoTracks: stream.getVideoTracks() });
       socketRef.current.emit("join-room", roomID);
-
-      socketRef.current.on("room-full", () =>
-        console.log("Sorry the room is full!")
-      );
 
       socketRef.current.on("all-users", (users) => {
         const peers = [];
@@ -102,6 +168,7 @@ const Room = (props) => {
       socketRef.current.on("receiving-answer", (payload) => {
         const item = peersRef.current.find((p) => p.peerID === payload.id);
         item.peer.signal(payload.data);
+        addUser(user, roomID);
       });
 
       socketRef.current.on("user-left", (id) => {
@@ -113,8 +180,16 @@ const Room = (props) => {
         peersRef.current = newPeers;
         setPeers(newPeers);
       });
+
+      socketRef.current.on("reload_msgs", (id) => {
+        fetchChatMsgs();
+      });
     };
-    videoChat();
+    if (isAuthenticated) {
+      videoChat();
+      fetchChatMsgs();
+    } else loginWithRedirect();
+    // console.log(msgs);
   }, []);
 
   const leaveRoom = () => {
@@ -125,43 +200,192 @@ const Room = (props) => {
     props.history.push(`/`);
   };
 
-  const shareScreen = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        cursor: true,
-      });
-      const screenTrack = stream.getTracks()[0];
-      peersRef.current.forEach((p) => {
-        p.peer.replaceTrack(
-          video.videoTracks[0],
-          screenTrack,
-          userStream.current
-        );
-      });
-      screenTrack.onended = () =>
-        peersRef.current.forEach((p) => {
-          p.peer.replaceTrack(
-            screenTrack,
-            video.videoTracks[0],
-            userStream.current
-          );
-        });
-    } catch (e) {
-      console.log(e);
+  const calcRows = (count) => {
+    if (count <= 2) return 30;
+    if (count <= 6) return 15;
+    if (count <= 9) return 10;
+    if (count <= 16) return 7;
+  };
+
+  const calcCols = (count) => {
+    if (count === 1) return 60;
+    if (count <= 4) return 30;
+    if (count <= 9) return 20;
+    if (count <= 16) return 15;
+  };
+
+  const fetchChatMsgs = async () => {
+    const latestMsgs = await getChatMsgs(user, roomID);
+    // console.log(`Latest Messages: ${latestMsgs}`);
+    // console.log(latestMsgs);
+    if (latestMsgs && typeof latestMsgs[Symbol.iterator] === "function") {
+      // console.log("setting latestMsgs");
+      setMsgs([...latestMsgs]);
+    }
+    // console.log(msgs);
+  };
+
+  const getTime = (timeStr) => {
+    return timeStr.substring(11, 19);
+  };
+
+  const getInitials = (sender) => {
+    let ans = "";
+    if (sender.first_name) ans += sender.first_name.substr(0, 1).toUpperCase();
+    if (sender.last_name) ans += sender.last_name.substr(0, 1).toUpperCase();
+    return ans;
+  };
+
+  const sendMsg = async () => {
+    if (msg.length === 0) console.log("Kuch toh likho");
+    else {
+      const response = await sendChatMsg(user, msg, roomID);
+      socketRef.current.emit("reload");
+      setMsg("");
+      // console.log(response);
+      fetchChatMsgs();
     }
   };
 
+  const classes = useStyles();
+
   return (
     <Container>
-      <StyledVideo muted ref={userVideo} autoPlay playsInline />
-      {peers.map((peer) => {
-        return <Video key={peer.peerID} peer={peer.peer} />;
-      })}
+      <StyledVideo controls muted ref={userVideo} autoPlay playsInline />
+      <div className={classes.root}>
+        <GridList
+          cellHeight={Math.floor(height / 35)}
+          cols={60}
+          className={classes.gridList}
+        >
+          {peers.map((peer) => (
+            <GridListTile
+              rows={calcRows(peers.length)}
+              cols={calcCols(peers.length)}
+              key={peer.peerID}
+            >
+              <Video peer={peer.peer} />
+            </GridListTile>
+          ))}
+        </GridList>
+      </div>
+
+      <div
+        style={{ position: "absolute", height: "100%", width: "100%", top: 0 }}
+      >
+        <div className="flex justify-between" style={{ minHeight: "95%" }}>
+          {/* Video stream section */}
+          <section className="flex">
+            {/* Messages sidebar */}
+            <div
+              id="chat-div"
+              className={
+                (showChat ? "" : "hidden") +
+                " bg-gray-100 text-gray-700 sm:max-w-sm p-4 border-t border-b-4 border-gray-300 flex flex-col justify-between"
+              }
+            >
+              <div>
+                <div className="flex justify-between items-center">
+                  <h1 className="font-semibold">Meeting chat</h1>
+                </div>
+
+                <div className="py-3 flex justify-center items-center space-x-4 text-sm">
+                  <svg
+                    className="w-6 h-6 text-indigo-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    ></path>
+                  </svg>
+
+                  <h2 className="font-semibold">Meeting started</h2>
+                  {/* <span className="text-xs">10:12</span> */}
+                </div>
+
+                {/* Div for messages */}
+                <div
+                  style={{ maxHeight: 23.2 + "rem" }}
+                  className="text-sm mt-4 space-y-4 overflow-scroll scrollbar-hidden"
+                >
+                  {/* Individual message */}
+                  {msgs.map((msg) => (
+                    <div className="flex" key={parseInt(msg.id)}>
+                      <span className="bg-indigo-900 text-gray-300 h-8 w-10 p-2 rounded-full flex items-center justify-center mt-2 z-10">
+                        {getInitials(msg.sender)}
+                      </span>
+                      <div className="-ml-2 py-2 px-4 bg-gray-200 rounded">
+                        <div className="flex justify-between items-center">
+                          <h1 className="font-semibold text-gray-800">
+                            {msg.sender.first_name || msg.sender.username}
+                          </h1>
+                          <span className="text-xs">
+                            {getTime(msg.created)}
+                          </span>
+                        </div>
+                        <p
+                          dangerouslySetInnerHTML={{
+                            __html: DOMPurify.sanitize(msg.text),
+                          }}
+                        ></p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex mt-10">
+                <input
+                  type="text"
+                  className="p-3 bg-transparent border border-r-0 border-gray-400 text-sm outline-none rounded-tl rounded-bl w-full tracking-wide"
+                  placeholder="Type a new message"
+                  value={msg}
+                  ref={msgRef}
+                  onChange={(e) => setMsg(e.target.value)}
+                />
+                <button
+                  className="p-2 bg-blue-800 text-gray-200 rounded-tr rounded-br"
+                  onClick={(e) => sendMsg(e)}
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
       <Menubar
         audio={audio}
         video={video}
+        screenShare={screenShare}
+        showChat={showChat}
+        setAudio={setAudio}
+        setVideo={setVideo}
+        setScreenShare={setScreenShare}
+        setShowChat={setShowChat}
         leaveRoom={leaveRoom}
-        shareScreen={shareScreen}
+        peersRef={peersRef}
+        userStream={userStream}
       />
     </Container>
   );

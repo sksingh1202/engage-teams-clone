@@ -1,10 +1,16 @@
 // import modules
 require("dotenv").config();
+const bodyParser = require("body-parser");
 const express = require("express");
 const app = express();
 const httpServer = require("http").createServer(app);
 const io = require("socket.io")(httpServer);
 const path = require("path");
+const axios = require("axios");
+const { response } = require("express");
+const { readdirSync } = require("fs");
+
+app.use(bodyParser.json());
 
 // when deployed
 if (process.env.NODE_ENV === "production") {
@@ -20,16 +26,22 @@ const users = {};
 // dictionary with key => userId and value => roomId
 const rooms = {};
 
+// dictionary with key => roomId and value => chatId
+const chats = {};
+
+// dictionary with key => roomId and value => admin username
+const admins = {};
+
 io.on("connection", (socket) => {
   // "join-room" is triggered by client after loading the stream
   socket.on("join-room", (roomID) => {
     // add user (socket.id) to room (roomId)
     if (users[roomID]) {
-      const length = users[roomID].length;
-      if (length === 4) {
-        socket.emit("room-full");
-        return;
-      }
+      // const length = users[roomID].length;
+      // if (length === 7) {
+      //   socket.emit("room-full");
+      //   return;
+      // }
       users[roomID].push(socket.id);
     } else {
       users[roomID] = [socket.id];
@@ -53,6 +65,11 @@ io.on("connection", (socket) => {
       data: payload.data,
       id: socket.id,
     });
+  });
+
+  socket.on("reload", () => {
+    console.log("reload");
+    socket.broadcast.emit("reload_msgs", socket.id);
   });
 
   socket.on("disconnect", (reason) => {
@@ -84,6 +101,126 @@ io.on("connection", (socket) => {
   });
 });
 
-httpServer.listen(process.env.PORT || 8000, () =>
-  console.log("server is running on port 8000")
-);
+app.post("/create_user", async (req, res) => {
+  try {
+    let data = req.body;
+    data["secret"] = process.env.USER_SECRET;
+    const config = {
+      method: "put", // get or create user
+      url: "https://api.chatengine.io/users/",
+      headers: {
+        "PRIVATE-KEY": process.env.PROJECT_PRIVATE_KEY,
+      },
+      data: data,
+    };
+    const response = await axios(config); // send request using axios
+    res.send(response.data);
+  } catch (error) {
+    console.log(error);
+    res.send(error);
+  }
+});
+
+app.post("/create_chat", async (req, res) => {
+  try {
+    if(req.body.roomID in users) throw "Room Already Exists!"
+    let data = req.body.userData;
+    console.log(data);
+    const config = {
+      method: "post", // get or create user
+      url: "https://api.chatengine.io/chats/",
+      headers: {
+        "Project-ID": process.env.PROJECT_ID,
+        "User-Name": data.admin_username,
+        "User-Secret": process.env.USER_SECRET,
+      },
+      data: data,
+    };
+    const response = await axios(config); // send request using axios
+    chats[req.body.roomID] = response.data.id;
+    admins[req.body.roomID] = data.admin_username;
+    console.log(`Chats: ${chats[req.body.roomID]}`);
+    res.send(response.data);
+  } catch (error) {
+    console.log(error);
+    res.send(error);
+  }
+});
+
+app.post("/add_user", async (req, res) => {
+  try {
+    const data = req.body.userData;
+    const config = {
+      method: "POST",
+      url: `https://api.chatengine.io/chats/${chats[req.body.roomID]}/people/`,
+      headers: {
+        "Project-ID": process.env.PROJECT_ID,
+        "User-Name": admins[req.body.roomID],
+        "User-Secret": process.env.USER_SECRET,
+      },
+      data: data,
+    };
+    const response = await axios(config);
+    console.log(response.data);
+    res.send(response.data);
+  } catch (error) {
+    console.log(error);
+    res.send(error);
+  }
+});
+
+app.post("/get_chat_msgs", async (req, res) => {
+  try {
+    const data = req.body;
+    console.log(data);
+    const config = {
+      method: "get",
+      url: `https://api.chatengine.io/chats/${chats[data.roomID]}/messages/`,
+      headers: {
+        "Project-ID": process.env.PROJECT_ID,
+        "User-Name": data.username,
+        "User-Secret": process.env.USER_SECRET,
+      },
+    };
+    const response = await axios(config);
+    // console.log(response.data);
+    res.send(response.data);
+  } catch (error) {
+    // console.log(error);
+    res.send(error);
+  }
+});
+
+app.post("/post_chat_msg", async (req, res) => {
+  try {
+    const data = req.body;
+    const config = {
+      method: "post",
+      url: `https://api.chatengine.io/chats/${chats[data.roomID]}/messages/`,
+      headers: {
+        "Project-ID": process.env.PROJECT_ID,
+        "User-Name": data.username,
+        "User-Secret": process.env.USER_SECRET,
+      },
+      data: data.data,
+    };
+    const response = await axios(config);
+    console.log(response.data);
+    res.send(response.data);
+  } catch (error) {
+    console.log(error);
+    res.send(error);
+  }
+});
+
+app.post("/fetch_keys", (req, res) => {
+  const data = {
+    projectID: process.env.PROJECT_ID,
+    userSecret: process.env.USER_SECRET
+  };
+  res.send(data);
+})
+
+httpServer.listen(process.env.PORT || 8000, () => {
+  console.log("server is running on port 8000");
+});
