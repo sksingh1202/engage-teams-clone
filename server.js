@@ -32,19 +32,27 @@ const chats = {};
 // dictionary with key => roomId and value => admin username
 const admins = {};
 
+// dictionary with key => userId and value => [Aray of email(s)]
+const emails = {};
+
+// dictionary with key => roomId and value => [Aray of allowed email(s)]
+const allowedUsersInRoom = {};
+
+// dictionary with key => roomId and value => userId of admin
+const adminSocket = {};
+
 io.on("connection", (socket) => {
   // "join-room" is triggered by client after loading the stream
-  socket.on("join-room", (roomID) => {
+  socket.on("join-room", (payload) => {
     // add user (socket.id) to room (roomId)
+    const roomID = payload.roomID;
+    const email = payload.email;
     if (users[roomID]) {
-      // const length = users[roomID].length;
-      // if (length === 7) {
-      //   socket.emit("room-full");
-      //   return;
-      // }
       users[roomID].push(socket.id);
     } else {
       users[roomID] = [socket.id];
+      allowedUsersInRoom[roomID] = [email];
+      adminSocket[roomID] = socket.id;
     }
 
     rooms[socket.id] = roomID;
@@ -99,6 +107,43 @@ io.on("connection", (socket) => {
     // else the socket will automatically try to reconnect
     console.log(`Socket disconnected due to: ${reason}`);
   });
+
+  // admit - deny permission
+  socket.on("permission", (payload) => {
+    const userAlias = payload.userName;
+    const roomID = payload.roomID;
+    const email = payload.email;
+    emails[socket.id] = email;
+
+    const allowedUsers = allowedUsersInRoom[roomID];
+    console.log("permission arrived");
+    console.log(allowedUsers, email);
+
+    if (!(roomID in allowedUsersInRoom) || allowedUsers.includes(email)) {
+      // allow directly
+      socket.emit("no permit required");
+    } else {
+      io.to(adminSocket[roomID]).emit("permit?", {
+        id: socket.id,
+        userAlias: userAlias,
+      });
+    }
+  });
+
+  socket.on("permit status", payload => {
+    if (payload.allowed){
+      // allow the user to enter into the meeting
+      const roomID = rooms[socket.id];
+      // add this user to the list of trusted users
+      allowedUsersInRoom[roomID].push(emails[payload.id]);
+      console.log("Allowed");
+      io.to(payload.id).emit("allowed", chats[roomID]);
+    }
+    else{
+      console.log("Denied");
+      io.to(payload.id).emit("denied");
+    }
+  });
 });
 
 app.post("/create_user", async (req, res) => {
@@ -123,7 +168,7 @@ app.post("/create_user", async (req, res) => {
 
 app.post("/create_chat", async (req, res) => {
   try {
-    if(req.body.roomID in users) throw "Room Already Exists!"
+    if (req.body.roomID in users) throw "Room Already Exists!";
     let data = req.body.userData;
     console.log(data);
     const config = {
@@ -216,10 +261,10 @@ app.post("/post_chat_msg", async (req, res) => {
 app.post("/fetch_keys", (req, res) => {
   const data = {
     projectID: process.env.PROJECT_ID,
-    userSecret: process.env.USER_SECRET
+    userSecret: process.env.USER_SECRET,
   };
   res.send(data);
-})
+});
 
 httpServer.listen(process.env.PORT || 8000, () => {
   console.log("server is running on port 8000");
