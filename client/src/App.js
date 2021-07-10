@@ -14,10 +14,10 @@ function App() {
   return (
     <BrowserRouter>
       <Switch>
-        <Route path="/room/:roomID" component={Room} />
-        <Route path="/chat" component={Chat} />
-        <Route path="/create" component={CreateUser} />
-        <Route path="/" component={CreateRoom} />
+        <Route path="/room/:roomID" exact component={Room} />
+        <Route path="/chat" exact component={Chat} />
+        <Route path="/create" exact component={CreateUser} />
+        <Route path="/" exact component={CreateRoom} />
       </Switch>
     </BrowserRouter>
   );

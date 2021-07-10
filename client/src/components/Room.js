@@ -6,8 +6,8 @@ import io from "socket.io-client";
 import styled from "styled-components";
 import GridList from "@material-ui/core/GridList";
 import GridListTile from "@material-ui/core/GridListTile";
-import Snackbar from '@material-ui/core/Snackbar';
-import MuiAlert from '@material-ui/lab/Alert';
+import Snackbar from "@material-ui/core/Snackbar";
+import MuiAlert from "@material-ui/lab/Alert";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
@@ -15,6 +15,7 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
+import AssignmentIcon from "@material-ui/icons/Assignment";
 import { makeStyles } from "@material-ui/core/styles";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useTheme } from "@material-ui/core/styles";
@@ -47,10 +48,14 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "center",
   },
   snackRoot: {
-    width: '100%',
-    '& > * + *': {
+    width: "100%",
+    "& > * + *": {
       marginTop: theme.spacing(2),
     },
+  },
+  button: {
+    margin: theme.spacing(1),
+    marginLeft: theme.spacing(4),
   },
 }));
 
@@ -127,6 +132,7 @@ const Room = (props) => {
   const [showChat, setShowChat] = useState(false);
   const [screenShare, setScreenShare] = useState(false);
   const [openSnack, setOpenSnack] = useState(false);
+  const [snackMsg, setSnackMsg] = useState([""]);
   const [dialog, setDialog] = useState("");
   const socketRef = useRef();
   const userVideo = useRef();
@@ -226,6 +232,7 @@ const Room = (props) => {
         try {
           await videoChat();
           await fetchChatMsgs();
+          setSnackMsg([`Welcome to the meet, ${user.first_name || user.name || user.email}`]);
         } catch (error) {
           // "check your connection and try again";
         }
@@ -250,6 +257,7 @@ const Room = (props) => {
         try {
           await videoChat();
           await fetchChatMsgs();
+          setSnackMsg([`Welcome to the meet, ${user.first_name || user.name || user.email}`]);
         } catch (error) {
           // "check your connection and try again";
         }
@@ -342,9 +350,14 @@ const Room = (props) => {
       </div>
 
       <div
-        style={{ position: "absolute", height: "100%", width: "100%", top: 0 }}
+        style={{
+          position: "absolute",
+          height: "100%",
+          width: "100%",
+          top: "7%",
+        }}
       >
-        <div className="flex justify-between" style={{ minHeight: "95%" }}>
+        <div className="flex justify-between" style={{ minHeight: "85%" }}>
           {/* Video stream section */}
           <section className="flex">
             {/* Messages sidebar */}
@@ -459,7 +472,7 @@ const Room = (props) => {
         userStream={userStream}
       />
 
-      {dialog[0] === '1' && (
+      {dialog[0] === "1" && (
         <div>
           <Dialog
             fullScreen={fullScreen}
@@ -530,7 +543,9 @@ const Room = (props) => {
             </DialogTitle>
             <DialogContent>
               <DialogContentText>
-                {"You are not allowed to join this call. Kindly contact the organizer for the permission."}
+                {
+                  "You are not allowed to join this call. Kindly contact the organizer for the permission."
+                }
               </DialogContentText>
             </DialogContent>
             <DialogActions>
@@ -550,12 +565,46 @@ const Room = (props) => {
         </div>
       )}
       <div className={classes.snackRoot}>
-      <Snackbar anchorOrigin={{ vertical: "top", horizontal: "center" }} open={openSnack} autoHideDuration={6000} onClose={() => setOpenSnack(false)}>
-        <Alert onClose={() => setOpenSnack(false)} severity="error">
-          The message cannot be empty!
-        </Alert>
-      </Snackbar>
-    </div>
+        <Snackbar
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          open={openSnack}
+          autoHideDuration={6000}
+          onClose={() => setOpenSnack(false)}
+        >
+          <Alert onClose={() => setOpenSnack(false)} severity="error">
+            The message cannot be empty!
+          </Alert>
+        </Snackbar>
+      </div>
+        <div className={classes.snackRoot}>
+          <Snackbar
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            open={snackMsg[0].length !== 0}
+            autoHideDuration={6000}
+            onClose={() => setSnackMsg([""])}
+          >
+            <Alert
+              onClose={() => setSnackMsg([""])}
+              severity="success"
+            >
+              { snackMsg[0] }
+            </Alert>
+          </Snackbar>
+        </div>
+      <div>
+        <Button
+          variant="contained"
+          color="primary"
+          className={classes.button}
+          endIcon={<AssignmentIcon />}
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href.toString());
+            setSnackMsg(["Link Copied To Clipboard"]);
+          }}
+        >
+          Copy Meeting Link
+        </Button>
+      </div>
     </Container>
   );
 };

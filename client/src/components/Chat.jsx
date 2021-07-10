@@ -38,7 +38,7 @@ const Chat = (props) => {
           chatEngRef.current["userSecret"]
         )
           setAllSet(true);
-        console.log(allSet);
+        // console.log(allSet);
       } catch (error) {
         console.log(error);
         props.history.push(`/`);

@@ -170,7 +170,7 @@ app.post("/create_chat", async (req, res) => {
   try {
     if (req.body.roomID in users) throw "Room Already Exists!";
     let data = req.body.userData;
-    console.log(data);
+    // console.log(data);
     const config = {
       method: "post", // get or create user
       url: "https://api.chatengine.io/chats/",
@@ -184,7 +184,7 @@ app.post("/create_chat", async (req, res) => {
     const response = await axios(config); // send request using axios
     chats[req.body.roomID] = response.data.id;
     admins[req.body.roomID] = data.admin_username;
-    console.log(`Chats: ${chats[req.body.roomID]}`);
+    // console.log(`Chats: ${chats[req.body.roomID]}`);
     res.send(response.data);
   } catch (error) {
     console.log(error);
@@ -206,7 +206,7 @@ app.post("/add_user", async (req, res) => {
       data: data,
     };
     const response = await axios(config);
-    console.log(response.data);
+    // console.log(response.data);
     res.send(response.data);
   } catch (error) {
     console.log(error);
@@ -250,7 +250,7 @@ app.post("/post_chat_msg", async (req, res) => {
       data: data.data,
     };
     const response = await axios(config);
-    console.log(response.data);
+    // console.log(response.data);
     res.send(response.data);
   } catch (error) {
     console.log(error);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useReducer } from "react";
 
 import { v1 as uuid } from "uuid"; // to generate random roomId(s)
 import { makeStyles } from "@material-ui/core/styles";
@@ -53,7 +53,9 @@ const CreateRoom = (props) => {
   const [openSnack, setOpenSnack] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [meetLink, setMeetLink] = useState("");
-  const { isAuthenticated, loginWithRedirect, logout, user } = useAuth0();
+  const [snackMsg, setSnackMsg] = useState([""]);
+  const { isAuthenticated, loginWithRedirect, logout, user, isLoading } =
+    useAuth0();
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -119,8 +121,8 @@ const CreateRoom = (props) => {
         setTimeout(logout, 2500);
       }
     };
-    if (isAuthenticated) makeUser();
-  }, [isAuthenticated, logout, user]);
+    if (!isLoading && isAuthenticated) makeUser();
+  }, [isAuthenticated, isLoading, logout, user]);
 
   return (
     <div>
@@ -129,13 +131,26 @@ const CreateRoom = (props) => {
           <img src={logo_img} className="h-16 w-20" alt="" />
           <span className="ml-3 text-xl">TEEMS</span>
           <nav className="md:ml-auto flex flex-wrap items-center text-base justify-center">
-            {isAuthenticated ? (
-              <button
-                className="mt-5 md:mt-0 md:mr-5 inline-flex text-white bg-indigo-500 border-0 py-3 px-10 focus:outline-none hover:bg-indigo-600 rounded text-lg"
-                onClick={() => logout({ returnTo: window.location.origin })}
-              >
-                <span className="cursor-pointer">Logout</span>
-              </button>
+            {!isLoading && isAuthenticated ? (
+              <div>
+                <span className="mr-6 text-lg text-indigo-700">
+                  Welcome back {user.first_name || user.name || user.email}
+                </span>
+                <button
+                  className="mt-5 md:mt-0 md:mr-5 inline-flex text-white bg-indigo-500 border-0 py-3 px-10 focus:outline-none hover:bg-indigo-600 rounded text-lg"
+                  onClick={async () => {
+                    const name = user.first_name || user.name || user.email;
+                    setSnackMsg([
+                      `Goodbye, ${name}. Looking forward to seeing you at Teems.`,
+                    ]);
+                    setTimeout(() => {
+                      logout({ returnTo: window.location.origin });
+                    }, 5000);
+                  }}
+                >
+                  <span className="cursor-pointer">Logout</span>
+                </button>
+              </div>
             ) : (
               <button
                 className="mt-5 md:mt-0 md:mr-5 inline-flex text-white bg-indigo-500 border-0 py-3 px-10 focus:outline-none hover:bg-indigo-600 rounded text-lg"
@@ -153,7 +168,6 @@ const CreateRoom = (props) => {
             <h1 className="title-font text-3xl md:text-4xl lg:text-5xl mb-4 font-bold text-gray-900">
               Microsof Teems
             </h1>
-
             <p className="mb-8 leading-relaxed text-xl md:text-2xl lg:text-3xl">
               Meet, chat, and call in just one place.
             </p>
@@ -221,6 +235,18 @@ const CreateRoom = (props) => {
         >
           <Alert onClose={() => setOpenSnack(false)} severity="error">
             Invalid meeting link!
+          </Alert>
+        </Snackbar>
+      </div>
+      <div className={classes.root}>
+        <Snackbar
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          open={snackMsg[0].length !== 0}
+          autoHideDuration={6000}
+          onClose={() => setSnackMsg([""])}
+        >
+          <Alert onClose={() => setSnackMsg([""])} color="info">
+            {snackMsg[0]}
           </Alert>
         </Snackbar>
       </div>

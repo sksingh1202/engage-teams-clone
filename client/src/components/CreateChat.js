@@ -17,7 +17,7 @@ export async function createChat(user, roomID) {
       data: data,
     };
     const response = await axios(config); // send request using axios
-    console.log(response);
+    // console.log(response);
     return response.data.id;
   } catch (error) {
     console.log(error);
@@ -31,14 +31,14 @@ export async function getChatMsgs(user, roomID) {
       username: user.email,
       roomID: roomID,
     };
-    console.log(`roomID: ${roomID}`);
+    // console.log(`roomID: ${roomID}`);
     const config = {
       method: "post",
       url: "/get_chat_msgs",
       data: data,
     };
     const response = await axios(config);
-    console.log(response);
+    // console.log(response);
     return response.data;
   } catch (error) {
     console.log(error);
@@ -55,14 +55,14 @@ export async function sendChatMsg(user, msg, roomID) {
       },
       roomID: roomID,
     };
-    console.log(data);
+    // console.log(data);
     const config = {
       method: "post",
       url: "/post_chat_msg",
       data: data,
     };
     const response = await axios(config);
-    console.log(response);
+    // console.log(response);
     return response;
   } catch (error) {
     console.log(error);
