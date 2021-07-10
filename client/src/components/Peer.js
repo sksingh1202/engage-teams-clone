@@ -5,7 +5,18 @@ export function createPeer(userToSignal, callerID, stream, socketRef) {
   const peer = new Peer({
     initiator: true,
     trickle: false,
-    // stream,
+    config: {
+      iceServers: [
+        {
+          urls: "stun:stun.stunprotocol.org",
+        },
+        {
+          urls: "turn:34.93.132.250:3478?transport=tcp",
+          username: "kurento",
+          credential: "kurento",
+        },
+      ],
+    },
   });
 
   try {
