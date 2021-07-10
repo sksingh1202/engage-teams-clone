@@ -94,7 +94,9 @@ const CreateRoom = (props) => {
       mainLink === "http://localhost:3000/room/" ||
       mainLink === "https://localhost:3000/room/" ||
       mainLink === "https://engage-teams-clone.herokuapp.com/room/" ||
-      mainLink === "http://engage-teams-clone.herokuapp.com/room/"
+      mainLink === "http://engage-teams-clone.herokuapp.com/room/" ||
+      mainLink === "http://august-storm-319410.el.r.appspot.com/room/" ||
+      mainLink === "https://august-storm-319410.el.r.appspot.com/room/"
     )
       return meetId;
     else return "";
