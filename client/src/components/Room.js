@@ -54,8 +54,10 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   button: {
+    position: "absolute",
     margin: theme.spacing(1),
     marginLeft: theme.spacing(4),
+    top: 0,
   },
 }));
 
@@ -352,12 +354,12 @@ const Room = (props) => {
       <div
         style={{
           position: "absolute",
-          height: "100%",
+          height: "85%",
           width: "100%",
           top: "7%",
         }}
       >
-        <div className="flex justify-between" style={{ minHeight: "85%" }}>
+        <div className="flex justify-between" style={{ minHeight: "100%" }}>
           {/* Video stream section */}
           <section className="flex">
             {/* Messages sidebar */}
