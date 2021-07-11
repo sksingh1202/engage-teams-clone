@@ -136,14 +136,14 @@ const CreateRoom = (props) => {
             {!isLoading && isAuthenticated ? (
               <div>
                 <span className="mr-6 text-lg text-indigo-700">
-                  Welcome back {user.first_name || user.name || user.email}
+                  Welcome back, {user.first_name || user.name || user.email}
                 </span>
                 <button
                   className="mt-5 md:mt-0 md:mr-5 inline-flex text-white bg-indigo-500 border-0 py-3 px-10 focus:outline-none hover:bg-indigo-600 rounded text-lg"
                   onClick={async () => {
                     const name = user.first_name || user.name || user.email;
                     setSnackMsg([
-                      `Goodbye, ${name}. Looking forward to seeing you at Teems.`,
+                      `Goodbye, ${name}. Looking forward to see you at Teems.`,
                     ]);
                     setTimeout(() => {
                       logout({ returnTo: window.location.origin });
@@ -171,7 +171,7 @@ const CreateRoom = (props) => {
               Microsof Teems
             </h1>
             <p className="mb-8 leading-relaxed text-xl md:text-2xl lg:text-3xl">
-              Meet, chat, and call in just one place.
+              Meet and chat in just one place.
             </p>
             <div className="flex justify-center">
               <button
