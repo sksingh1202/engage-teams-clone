@@ -272,6 +272,7 @@ app.post("/get_rooms", (req, res) => {
   const data = {
     validRooms: validRooms,
   }
+  res.send(data);
 });
 
 httpServer.listen(process.env.PORT || 8000, () => {
