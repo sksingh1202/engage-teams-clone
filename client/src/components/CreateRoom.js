@@ -1,4 +1,4 @@
-import { useState, useEffect, useReducer } from "react";
+import { useState, useEffect } from "react";
 
 import { v1 as uuid } from "uuid"; // to generate random roomId(s)
 import { makeStyles } from "@material-ui/core/styles";
