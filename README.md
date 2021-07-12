@@ -8,6 +8,9 @@
 
 [Live Demo Link](https://livedemo.com)
 
+### Deployment
+The web app is deployed on https://microsof-teems.el.r.appspot.com/
+
 ## Built With
 
 - Languages :- JavaScript
@@ -16,9 +19,6 @@
 - Libraries :- [Socket.IO](https://socket.io/docs/v4/index.html), [simple-peer](https://www.npmjs.com/package/simple-peer), [Material-UI](https://material-ui.com/), [axios](https://www.npmjs.com/package/axios), [react-router-dom](https://reactrouter.com/web/api/BrowserRouter)
 - APIs :- [WebRTC](https://webrtc.org/)
 - Additional Tools :- npm, git
-
-### Deployment
-The web app is deployed on [Google Cloud](https://august-storm-319410.el.r.appspot.com/).
 
 ## User Stories
 The project was built on an agile-scrum methodology which tried to address the following user stories:

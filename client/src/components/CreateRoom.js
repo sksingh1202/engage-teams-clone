@@ -10,6 +10,7 @@ import KeyboardIcon from "@material-ui/icons/Keyboard";
 import VideocamIcon from "@material-ui/icons/Videocam";
 import CommentIcon from "@material-ui/icons/Comment";
 import AddIcCallIcon from "@material-ui/icons/AddIcCall";
+import axios from "axios";
 
 import { createUser } from "./CreateUser";
 import { createChat } from "./CreateChat";
@@ -65,7 +66,12 @@ const CreateRoom = (props) => {
       const id = uuid();
       const chatId = await createChat(user, id);
       if (chatId) {
-        props.history.push(`/room/${id}`); // redirect to a randomly generated room and push to history stack
+        props.history.push({
+          pathname: `/room/${id}`,
+          state: {
+            username: user.email,
+          },
+        }); // redirect to a randomly generated room and push to history stack
       } else {
         setOpenDialog(true);
         console.log("Error");
@@ -86,31 +92,47 @@ const CreateRoom = (props) => {
     }
   };
 
-  const getId = () => {
+  const getRooms = async () => {
+    const config = {
+      method: "get", // get the validRooms
+      url: "/get_rooms",
+    };
+    const response = await axios(config); // send request using axios
+    return response.data.validRooms;
+  };
+
+  const getId = async () => {
+    if(!isValidHttpUrl(meetLink)) return "";
     let n = meetLink.lastIndexOf("/");
     let mainLink = meetLink.substring(0, n + 1);
     let meetId = meetLink.substring(n + 1);
+    const validRooms = await getRooms();
     if (
       mainLink === "http://localhost:3000/room/" ||
       mainLink === "https://localhost:3000/room/" ||
       mainLink === "https://engage-teams-clone.herokuapp.com/room/" ||
       mainLink === "http://engage-teams-clone.herokuapp.com/room/" ||
-      mainLink === "http://august-storm-319410.el.r.appspot.com/room/" ||
-      mainLink === "https://august-storm-319410.el.r.appspot.com/room/"
+      mainLink === "http://microsof-teems.el.r.appspot.com/room/" ||
+      mainLink === "https://microsof-teems.el.r.appspot.com/room/"
     )
-      return meetId;
+      return Array.prototype.includes.call(validRooms, meetId) ? meetId : "";
     else return "";
   };
 
-  const joinCall = () => {
-    if (!isValidHttpUrl(meetLink) || getId(meetLink).length === 0) {
+  const joinCall = async () => {
+    const id = await getId(meetLink);
+    if (id.length === 0) {
       setOpenSnack(true);
       setMeetLink("");
     } else {
       if (!isAuthenticated) loginWithRedirect();
       if (isAuthenticated) {
-        const id = getId(meetLink);
-        props.history.push(`/room/${id}`); // redirect to the specified room and push to history stack
+        props.history.push({
+          pathname: `/room/${id}`,
+          state: {
+            username: user.email,
+          },
+        }); // redirect to the specified room and push to history stack
       }
     }
   };
@@ -134,12 +156,12 @@ const CreateRoom = (props) => {
           <span className="ml-3 text-xl">TEEMS</span>
           <nav className="md:ml-auto flex flex-wrap items-center text-base justify-center">
             {!isLoading && isAuthenticated ? (
-              <div>
-                <span className="mr-6 text-lg text-indigo-700">
+              <div className="mt-2 md:mt-0 mx-auto flex flex-wrap items-center justify-center space-y-3 md:space-y-0 space-x-5">
+                <div className="text-lg text-indigo-700 ">
                   Welcome back, {user.first_name || user.name || user.email}
-                </span>
+                </div>
                 <button
-                  className="mt-5 md:mt-0 md:mr-5 inline-flex text-white bg-indigo-500 border-0 py-3 px-10 focus:outline-none hover:bg-indigo-600 rounded text-lg"
+                  className="text-white bg-indigo-500 border-0 py-3 px-10 focus:outline-none hover:bg-indigo-600 rounded text-lg"
                   onClick={async () => {
                     const name = user.first_name || user.name || user.email;
                     setSnackMsg([

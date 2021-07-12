@@ -16,6 +16,8 @@ import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import AssignmentIcon from "@material-ui/icons/Assignment";
+import axios from "axios";
+// import Picker from 'emoji-picker-react';
 import { makeStyles } from "@material-ui/core/styles";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useTheme } from "@material-ui/core/styles";
@@ -136,14 +138,22 @@ const Room = (props) => {
   const [openSnack, setOpenSnack] = useState(false);
   const [snackMsg, setSnackMsg] = useState([""]);
   const [dialog, setDialog] = useState("");
+  // const [chosenEmoji, setChosenEmoji] = useState(null);
   const socketRef = useRef();
   const userVideo = useRef();
   const peersRef = useRef([]);
   const userStream = useRef();
   const msgRef = useRef();
   const joiningSocket = useRef();
-  const { user, isAuthenticated, loginWithRedirect } = useAuth0();
+  const { user, isAuthenticated, isLoading, loginWithRedirect } = useAuth0();
   const theme = useTheme();
+
+  // const onEmojiClick = (event, emojiObject) => {
+  //   let newMsg = msg;
+  //   msg += emojiObject.emoji;
+  //   console.log(emojiObject.emoji);
+  //   setChosenEmoji(newMsg);
+  // };
 
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const roomID = props.match.params.roomID;
@@ -223,7 +233,25 @@ const Room = (props) => {
       });
     };
 
+    const getRooms = async () => {
+      const config = {
+        method: "get", // get the validRooms
+        url: "/get_rooms",
+      };
+      const response = await axios(config); // send request using axios
+      // console.log(response);
+      return response.data.validRooms;
+    };
+
     const admitDeny = async () => {
+      if(!props.location.state || props.location.state.username !== user.email) {
+        const validRooms = await getRooms();
+        if(!Array.prototype.includes.call(validRooms, roomID)) {
+          setDialog("invalid roomId");
+          return false;
+        }
+      }
+
       socketRef.current.emit("permission", {
         userName: user.name || user.email,
         roomID: roomID,
@@ -266,11 +294,11 @@ const Room = (props) => {
       });
     };
 
-    if (isAuthenticated) {
+    if (!isLoading && isAuthenticated) {
       admitDeny();
-    } else loginWithRedirect();
+    } else if(!isLoading) loginWithRedirect();
     // console.log(msgs);
-  }, [isAuthenticated, loginWithRedirect, roomID, user]);
+  }, [isAuthenticated, isLoading, loginWithRedirect, roomID, user]);
 
   const leaveRoom = () => {
     userVideo.current.srcObject.getTracks().forEach((track) => track.stop());
@@ -306,7 +334,21 @@ const Room = (props) => {
   };
 
   const getTime = (timeStr) => {
-    return timeStr.substring(11, 19);
+    const time = timeStr.substring(11, 19);
+    let hr = parseInt(time.substr(0, 2)), min = parseInt(time.substr(3, 5)),  _m = "AM";
+    min += 30;
+    hr += 5;
+    if(min >= 60) {
+      min -= 60;
+      hr += 1;
+    }
+    if(hr >= 24) hr -= 24;
+    if(hr > 12) {
+      hr -= 12;
+      _m = "PM";
+    }
+    const indiaTime = `${hr}:${min} ${_m}`;
+    return indiaTime;
   };
 
   const getInitials = (sender) => {
@@ -402,18 +444,18 @@ const Room = (props) => {
                 >
                   {/* Individual message */}
                   {msgs.map((msg) => (
-                    <div className="flex" key={parseInt(msg.id)}>
+                    <div className="flex justify-items-stretch" key={parseInt(msg.id)}>
                       <span className="bg-indigo-900 text-gray-300 h-8 w-10 p-2 rounded-full flex items-center justify-center mt-2 z-10">
                         {getInitials(msg.sender)}
                       </span>
-                      <div className="-ml-2 py-2 px-4 bg-gray-200 rounded">
-                        <div className="flex justify-between items-center">
+                      <div className="-ml-2 py-2 px-4 bg-gray-200 rounded flex-grow">
+                        <div className="flex flex-grow justify-between items-center">
                           <h1 className="font-semibold text-gray-800">
                             {msg.sender.first_name || msg.sender.username}
                           </h1>
-                          <span className="text-xs">
+                          <div className="text-xs">
                             {getTime(msg.created)}
-                          </span>
+                          </div>
                         </div>
                         <p
                           dangerouslySetInnerHTML={{
@@ -434,7 +476,11 @@ const Room = (props) => {
                   value={msg}
                   ref={msgRef}
                   onChange={(e) => setMsg(e.target.value)}
+                  onKeyUp={(e) => {
+                    if(e.key === "Enter" || e.keyCode === 13) sendMsg(e)
+                  }}
                 />
+                {/* <Picker onEmojiClick={onEmojiClick} /> */}
                 <button
                   className="p-2 bg-blue-800 text-gray-200 rounded-tr rounded-br"
                   onClick={(e) => sendMsg(e)}
@@ -566,6 +612,46 @@ const Room = (props) => {
           </Dialog>
         </div>
       )}
+
+      {dialog === "invalid roomId" && (
+        <div>
+          <Dialog
+            fullScreen={fullScreen}
+            open={true}
+            onClose={() => {
+              setDialog("");
+              // redirection to home page on Close
+              window.location.href = window.location.origin;
+            }}
+            aria-labelledby="responsive-dialog-title"
+          >
+            <DialogTitle id="responsive-dialog-title">
+              {"Unable to Join the Meeting"}
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                {
+                  "This Meeting URL is invalid. Please double-check the Meeting URL and try again."
+                }
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                autoFocus
+                onClick={() => {
+                  setDialog("");
+                  // redirection to home page on Close
+                  window.location.href = window.location.origin;
+                }}
+                color="primary"
+              >
+                Ok
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </div>
+      )}
+
       <div className={classes.snackRoot}>
         <Snackbar
           anchorOrigin={{ vertical: "top", horizontal: "center" }}

@@ -76,7 +76,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("reload", () => {
-    console.log("reload");
+    // console.log("reload");
     socket.broadcast.emit("reload_msgs", socket.id);
   });
 
@@ -117,7 +117,7 @@ io.on("connection", (socket) => {
 
     const allowedUsers = allowedUsersInRoom[roomID];
     console.log("permission arrived");
-    console.log(allowedUsers, email);
+    // console.log(allowedUsers, email);
 
     if (!(roomID in allowedUsersInRoom) || allowedUsers.includes(email)) {
       // allow directly
@@ -264,6 +264,14 @@ app.post("/fetch_keys", (req, res) => {
     userSecret: process.env.USER_SECRET,
   };
   res.send(data);
+});
+
+app.get("/get_rooms", async (req, res) => {
+  const validRooms = Object.keys(users);
+  // console.log(validRooms);
+  res.send({
+    validRooms: validRooms,
+  });
 });
 
 httpServer.listen(process.env.PORT || 8000, () => {
