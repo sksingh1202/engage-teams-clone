@@ -103,12 +103,12 @@ const CreateRoom = (props) => {
     return response.data.validRooms;
   };
 
-  const getId = async () => {
+  const getId = () => {
     if(!isValidHttpUrl(meetLink)) return "";
     let n = meetLink.lastIndexOf("/");
     let mainLink = meetLink.substring(0, n + 1);
     let meetId = meetLink.substring(n + 1);
-    const validRooms = await getRooms();
+    // const validRooms = await getRooms();
     if (
       mainLink === "http://localhost:3000/room/" ||
       mainLink === "https://localhost:3000/room/" ||
@@ -118,13 +118,15 @@ const CreateRoom = (props) => {
       mainLink === "https://microsof-teems.el.r.appspot.com/room/"
     ) {
       // console.log(validRooms);
-      return Array.prototype.indexOf.call(validRooms, meetId) !== -1 ? meetId : "";
+      // return Array.prototype.indexOf.call(validRooms, meetId) !== -1 ? meetId : "";
+      return meetId;
     }
     else return "";
   };
 
-  const joinCall = async () => {
-    const id = await getId(meetLink);
+  const joinCall = () => {
+    const id = getId(meetLink);
+    // const id = await getId(meetLink);
     if (id.length === 0) {
       setOpenSnack(true);
       setMeetLink("");
