@@ -266,12 +266,12 @@ app.post("/fetch_keys", (req, res) => {
   res.send(data);
 });
 
-app.get("/get_rooms", async (req, res) => {
+app.post("/get_rooms", (req, res) => {
   const validRooms = Object.keys(users);
   // console.log(validRooms);
-  res.send({
+  const data = {
     validRooms: validRooms,
-  });
+  }
 });
 
 httpServer.listen(process.env.PORT || 8000, () => {
