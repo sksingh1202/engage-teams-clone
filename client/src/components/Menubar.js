@@ -162,7 +162,7 @@ async function shareScreen(
   screenTrackRef
 ) {
   try {
-    console.log(screenTrackRef.current);
+    // console.log(screenTrackRef.current);
     if (!screenShare) {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         cursor: true,
@@ -186,7 +186,7 @@ async function shareScreen(
         });
       };
     } else if (screenTrackRef.current) {
-      console.log("RAN");
+      // console.log("RAN");
       screenTrackRef.current.stop();
       setScreenShare(false);
     }

@@ -245,13 +245,13 @@ const Room = (props) => {
     };
 
     const admitDeny = async () => {
-      // if(!props.location.state || props.location.state.username !== user.email) {
-      //   const validRooms = await getRooms();
-      //   if(Array.prototype.indexOf.call(validRooms, roomID) === -1) {
-      //     setDialog("invalid roomId");
-      //     return false;
-      //   }
-      // }
+      if(!props.location.state || props.location.state.username !== user.email) {
+        const validRooms = await getRooms();
+        if(Array.prototype.indexOf.call(validRooms, roomID) === -1) {
+          setDialog("invalid roomId");
+          return false;
+        }
+      }
 
       socketRef.current.emit("permission", {
         userName: user.name || user.email,
