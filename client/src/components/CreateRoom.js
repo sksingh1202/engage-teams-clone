@@ -114,8 +114,10 @@ const CreateRoom = (props) => {
       mainLink === "http://engage-teams-clone.herokuapp.com/room/" ||
       mainLink === "http://microsof-teems.el.r.appspot.com/room/" ||
       mainLink === "https://microsof-teems.el.r.appspot.com/room/"
-    )
-      return Array.prototype.includes.call(validRooms, meetId) ? meetId : "";
+    ) {
+      console.log(validRooms);
+      return Array.prototype.indexOf.call(validRooms, meetId) !== -1 ? meetId : "";
+    }
     else return "";
   };
 

@@ -246,7 +246,7 @@ const Room = (props) => {
     const admitDeny = async () => {
       if(!props.location.state || props.location.state.username !== user.email) {
         const validRooms = await getRooms();
-        if(!Array.prototype.includes.call(validRooms, roomID)) {
+        if(Array.prototype.indexOf.call(validRooms, roomID) === -1) {
           setDialog("invalid roomId");
           return false;
         }
