@@ -98,6 +98,7 @@ const CreateRoom = (props) => {
       url: "/get_rooms",
     };
     const response = await axios(config); // send request using axios
+    console.log(response);
     return response.data.validRooms;
   };
 
