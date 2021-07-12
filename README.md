@@ -18,7 +18,7 @@
 - Additional Tools :- npm, git
 
 ### Deployment
-The web app is deployed on [Google Cloud](http://august-storm-319410.el.r.appspot.com/).
+The web app is deployed on [Google Cloud](https://august-storm-319410.el.r.appspot.com/).
 
 ## User Stories
 The project was built on an agile-scrum methodology which tried to address the following user stories:
