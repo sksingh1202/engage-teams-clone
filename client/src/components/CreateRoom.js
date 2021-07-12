@@ -99,7 +99,7 @@ const CreateRoom = (props) => {
       data: "",
     };
     const response = await axios(config); // send request using axios
-    console.log(response);
+    // console.log(response);
     return response.data.validRooms;
   };
 
@@ -117,7 +117,7 @@ const CreateRoom = (props) => {
       mainLink === "http://microsof-teems.el.r.appspot.com/room/" ||
       mainLink === "https://microsof-teems.el.r.appspot.com/room/"
     ) {
-      console.log(validRooms);
+      // console.log(validRooms);
       return Array.prototype.indexOf.call(validRooms, meetId) !== -1 ? meetId : "";
     }
     else return "";

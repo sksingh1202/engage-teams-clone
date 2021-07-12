@@ -235,8 +235,9 @@ const Room = (props) => {
 
     const getRooms = async () => {
       const config = {
-        method: "get", // get the validRooms
+        method: "post", // get the validRooms
         url: "/get_rooms",
+        data: "",
       };
       const response = await axios(config); // send request using axios
       // console.log(response);

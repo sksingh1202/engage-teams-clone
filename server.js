@@ -7,9 +7,8 @@ const httpServer = require("http").createServer(app);
 const io = require("socket.io")(httpServer);
 const path = require("path");
 const axios = require("axios");
-const { response } = require("express");
-const { readdirSync } = require("fs");
 
+app.set('trust proxy', true);
 app.use(bodyParser.json());
 
 // when deployed
