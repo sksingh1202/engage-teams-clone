@@ -12,7 +12,7 @@ import CreateUser from "./components/UserTest";
 
 function App() {  
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/">
       <Switch>
         <Route path="/room/:roomID" exact component={Room} />
         <Route path="/chat" exact component={Chat} />
