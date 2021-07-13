@@ -158,7 +158,7 @@ const CreateRoom = (props) => {
     <div>
       <header className="text-gray-700 body-font border-b border-gray-200">
         <div className="container mx-auto flex flex-wrap p-5 flex-col md:flex-row items-center">
-          <img src={logo_img} className="h-16 w-20" alt="" />
+          <img src={logo_img} className="h-16 w-16" alt="" />
           <span className="ml-3 text-xl">TEEMS</span>
           <nav className="md:ml-auto flex flex-wrap items-center text-base justify-center">
             {!isLoading && isAuthenticated ? (
