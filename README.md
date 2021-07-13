@@ -1,15 +1,39 @@
+[Introduction of Microsof Teems](#microsof-teems)
+  * [Live Demo Link](#live-demo)
+  * [Deployment URL](#deployment)
+  * [Built With](#built-with)
+  * [User Stories](#user-stories)
+  * [Features](#features)
+      - [Video Call](#video-call)
+      - [Authentication](#authentication)
+      - [Chat](#chat)
+      - [Micro-Interactions and User Experience](#micro-interactions-and-user-experience)
+  * [Implementation and the Agile Workflow](#implementation-and-the-agile-workflow)
+      - [Sprint 1:](#sprint-1-)
+      - [Sprint 2:](#sprint-2-)
+      - [Sprint 3:](#sprint-3-)
+  * [What did the project acheive](#what-did-the-project-acheive)
+  * [Further Scope](#further-scope)
+  * [👤 Author](#---author)
+  * [🤝 Contributing](#---contributing)
+  * [Show your support](#show-your-support)
+  * [Acknowledgments](#acknowledgments)
+
 # Microsof Teems
 
 > Microsof Teems is a clone project of [Microsoft Teams](https://www.microsoft.com/en-in/microsoft-teams/group-chat-software)  Web Application (built as a part of Microsoft Engagement & Mentorship Program – Engage 2021). It includes great features such as chat, user authentication, and videoconferencing along with a user-friendly interface.
 
 ![screenshot](./screenshots/homePage.png)
+[Back to top](#)
 
 ## Live Demo
 
 [Live Demo Link](https://youtu.be/tZFsDGudLCk)
 
-### Deployment
+## Deployment
 The web app is deployed on https://microsof-teems.el.r.appspot.com/
+
+[Back to top](#)
 
 ## Built With
 
@@ -28,6 +52,8 @@ The project was built on an agile-scrum methodology which tried to address the f
 - As a surprise feature the Stake-Holder (Ace Hacker 🤨), has asked to include a meeting chat feature allowing chat communication even after the meeting is done.
 - As a Developer, I want only verified users to use the product.
 - As a Senior Software Engineer, I want the site to be personalized and interactive with an appealing user interface.
+
+[Back to top](#)
 
 ## Features
 1. #### Video Call
@@ -64,6 +90,8 @@ The project was built on an agile-scrum methodology which tried to address the f
     - **Delete** a conversation (chat).
     - **Create** new chats: This allows the users of the web app to create separate conversation channels and communicate with each other.
 
+    ![screenshot](./screenshots/chat.png)
+
 4. #### Micro-Interactions and User Experience
     The following features ensure that each user has an enriching experience:
     - **Single-page** application without reloads ensures a very little response time.
@@ -74,6 +102,8 @@ The project was built on an agile-scrum methodology which tried to address the f
     - Notification prompting the user that the **message** in the meeting chat **cannot be blank**.
     - Customized Alert Dialog box tells the user in case the **connection fails**.
     - Lastly, the **Goodbye message** appears when the user log's out of the web application.
+
+[Back to top](#)
 
 ## Implementation and the Agile Workflow
 
@@ -103,6 +133,8 @@ The focus of this sprint was to implement the **surprise** feature announced by 
 - Apart from that this project has given a real good insight regarding one of the **development methodologies used by Microsoft** to build some of it's products (i.e. **Agile Scrum**).
 - The interaction with the **mentors** of **Microsoft** and **representatives** from the **Ace Hacker team** were **insightful** and helped a lot in **structuring** the workflow and overall **development** of the project.
 
+[Back to top](#)
+
 ## Further Scope
 - The major backlog of Sprint 3 is to **improvise** on the **User Interface** of the **Chat** feature.
 - Apart from that features such as **White-Board**, **IP Call** and **Emojis** can be added in future sprints to make the product more usable.
@@ -117,6 +149,8 @@ The focus of this sprint was to implement the **surprise** feature announced by 
 
 **Although** this was an **individual** project and there is just one contributor right now (as of July 2021), I am **open to contributions**, issues, and  requests in the **future**!
 
+[Back to top](#)
+
 ## Show your support
 
 Give a ⭐️ (at the top right of this web-page) if you like this project!
@@ -129,3 +163,5 @@ Give a ⭐️ (at the top right of this web-page) if you like this project!
 - **Family**, for their **moral** support and help in **testing** this product without which the outcome was improbable
 - **Special** Thanks to **Ace Hacker** and **Microsoft** for all the support and for giving such a wonderful **opportunity to learn** in the form of **Engage 2021**
 - **Thanks** to **every** individual who directly (or indirectly) helped me build this wonderful project
+
+[Back to top](#)
