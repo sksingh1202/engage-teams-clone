@@ -57,6 +57,7 @@ The project was built on an agile-scrum methodology which tried to address the f
 
 ## Features
 1. #### Video Call
+    - The application supports Group Video Call of theoretically infinite but practically, depending on the bandwidth of the users.
     - The home page has options to **start** a new meeting or **join** an ongoing meeting using the **meeting link**. The users can join the meeting by **directly** typing in the URL in the browser window too.
     - The meeting link is **validated** for it's existence before any user can enter the meeting.
     - Participants have an option to copy the **meeting link** using a button.
@@ -76,6 +77,7 @@ The project was built on an agile-scrum methodology which tried to address the f
     It is **mandatory** for a user willing to use the application to log in and thereby authenticate by any one of the following methods:
     - Gmail Account
     - Github Account
+    - LinkedIn Account
     - Microsoft Account
 
     ![screenshot](./screenshots/auth.png)
